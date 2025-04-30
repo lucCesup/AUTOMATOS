@@ -74,9 +74,7 @@ def avaliar_rpn(rpn: List[Token]) -> float:
             pilha.append(operadores[tipo](a, b))
     return pilha[0]
 
-# ---------------------------------------------------------------------
-# 4. Função principal (entrada do usuário)
-# ---------------------------------------------------------------------
+
 def principal() -> None:
     expressao = input("Digite a expressão matemática: ").strip()
     if not expressao:
