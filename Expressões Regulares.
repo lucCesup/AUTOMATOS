@@ -1,10 +1,7 @@
 import re
-import sys
 import operator
 from typing import List, Tuple
 
-
-# 1. Definicao dos padroes de tokens (regex com grupos nomeados)
 
 PADRAO_TOKEN = re.compile(r"""
     (?P<INTEIRO>\d+)       # um ou mais dígitos
@@ -17,23 +14,19 @@ PADRAO_TOKEN = re.compile(r"""
   | (?P<ESPACO>\s+)        # espaços em branco (ignorados)
 """, re.VERBOSE)
 
-Token = Tuple[str, str]  # (tipo, lexema)
+Token = Tuple[str, str]
 
-
-# 2. Funcao de tokenizacao
 
 def tokenizar(expressao: str) -> List[Token]:
     """Converte a string de entrada em uma lista de tokens."""
     tokens: List[Token] = []
     for m in PADRAO_TOKEN.finditer(expressao):
         tipo = m.lastgroup
-        if tipo == "ESPACO":        # ignora espaços
+        if tipo == "ESPACO":        # ignora espaco
             continue
         tokens.append((tipo, m.group()))
     return tokens
 
-
-# 3. Conversao para RPN e avaliacao
 
 # Precedencia dos operadores
 precedencia = {
@@ -41,7 +34,7 @@ precedencia = {
     'MULTIPLICACAO': 2, 'DIVISAO': 2,
 }
 
-# Implementacoo dos operadores
+# Implementacao dos operadores
 operadores = {
     'SOMA': operator.add,
     'SUBTRACAO': operator.sub,
@@ -50,7 +43,7 @@ operadores = {
 }
 
 def infixa_para_rpn(tokens: List[Token]) -> List[Token]:
-    """Converte a lista de tokens em notação infixa para pós‑fixa (RPN)."""
+    """Converte a lista de tokens em notacao infixa para pós‑fixa (RPN)."""
     saida: List[Token] = []
     pilha: List[Token] = []
 
@@ -71,7 +64,7 @@ def infixa_para_rpn(tokens: List[Token]) -> List[Token]:
     return saida + pilha[::-1]
 
 def avaliar_rpn(rpn: List[Token]) -> float:
-    """Avalia a expressão em pós‑fixa retornando um float."""
+    """avalia a expressao em pós‑fixa retornando um float."""
     pilha: List[float] = []
     for tipo, lexema in rpn:
         if tipo == 'INTEIRO':
@@ -81,11 +74,11 @@ def avaliar_rpn(rpn: List[Token]) -> float:
             pilha.append(operadores[tipo](a, b))
     return pilha[0]
 
-
-# 4. Funcao principal (interface de linha de comando)
-
+# ---------------------------------------------------------------------
+# 4. Função principal (entrada do usuário)
+# ---------------------------------------------------------------------
 def principal() -> None:
-    expressao = sys.argv[1] if len(sys.argv) > 1 else sys.stdin.read().strip()
+    expressao = input("Digite a expressão matemática: ").strip()
     if not expressao:
         print("Erro: nenhuma expressão fornecida.", file=sys.stderr)
         sys.exit(1)
