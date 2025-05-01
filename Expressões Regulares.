@@ -2,6 +2,16 @@ import re
 import operator
 from typing import List, Tuple
 
+# -----------------------------------------------------------------------------------------------------------------
+# 1- re.compile(...)
+# - Constrói e “pré-compila” a expressão regular, tornando as buscas mais rápidas.
+#
+# 2- r""" ... """
+# - O prefixo r indica raw string: os caracteres de escape (\) são lidos literalmente pela regex, sem precisar dobrá-los (\\).
+#
+# 3- re.VERBOSE
+# - Permite quebrar a regex em varias linhas usar espacos e incluir comentarios (tudo depois de #)
+# sem que isso seja interpretado como parte do padrao. fica muito mais legivel
 
 PADRAO_TOKEN = re.compile(r"""
     (?P<INTEIRO>\d+)       # um ou mais dígitos
@@ -13,9 +23,20 @@ PADRAO_TOKEN = re.compile(r"""
   | (?P<FECHA_PAREN>\))    # parêntese direito
   | (?P<ESPACO>\s+)        # espaços em branco (ignorados)
 """, re.VERBOSE)
+# -----------------------------------------------------------------------------------------------------------------
+
 
 Token = Tuple[str, str]
 
+
+
+# -----------------------------------------------------------------------------------------------------------------
+# finditer varre a expressão original (expressao(input inserido pelo usuario)) e sempre que encontra um
+# trecho que corresponde a qualquer uma das alternativas devolve um match object m
+
+
+# m.lastgroup traz o nome do grupo que foi casado, permitindo identificar rapidamente se o lexema é um número
+# , um operador, etc.
 
 def tokenizar(expressao: str) -> List[Token]:
     """Converte a string de entrada em uma lista de tokens."""
@@ -27,12 +48,22 @@ def tokenizar(expressao: str) -> List[Token]:
         tokens.append((tipo, m.group()))
     return tokens
 
+# -----------------------------------------------------------------------------------------------------------------
 
+
+
+# -----------------------------------------------------------------------------------------------------------------
+# Cada valor inteiro e o nível de precedencia: quanto maior o numero, mais cedo o operador deve ser aplicado.
+# nível 1 → + e -
+# nível 2 → * e /
 # Precedencia dos operadores
 precedencia = {
     'SOMA': 1, 'SUBTRACAO': 1,
     'MULTIPLICACAO': 2, 'DIVISAO': 2,
 }
+# -----------------------------------------------------------------------------------------------------------------
+
+
 
 # Implementacao dos operadores
 operadores = {
@@ -41,6 +72,19 @@ operadores = {
     'MULTIPLICACAO': operator.mul,
     'DIVISAO': operator.truediv,
 }
+
+
+
+
+# -----------------------------------------------------------------------------------------------------------------
+"""
+
+    • Números vão direto para a saída.  
+    • Operadores são empilhados conforme a precedência.  
+    • Parênteses garantem prioridade absoluta.
+
+    Retorna a lista de tokens em RPN.
+    """
 
 def infixa_para_rpn(tokens: List[Token]) -> List[Token]:
     """Converte a lista de tokens em notacao infixa para pós‑fixa (RPN)."""
@@ -51,6 +95,7 @@ def infixa_para_rpn(tokens: List[Token]) -> List[Token]:
         if tipo == 'INTEIRO':
             saida.append((tipo, lexema))
         elif tipo in operadores:
+            # Desempilha enquanto houver operador de precedência ≥
             while (pilha and pilha[-1][0] in operadores and
                    precedencia[tipo] <= precedencia[pilha[-1][0]]):
                 saida.append(pilha.pop())
@@ -58,13 +103,24 @@ def infixa_para_rpn(tokens: List[Token]) -> List[Token]:
         elif tipo == 'ABRE_PAREN':
             pilha.append((tipo, lexema))
         elif tipo == 'FECHA_PAREN':
+            # Desempilha ate encontrar '('
             while pilha and pilha[-1][0] != 'ABRE_PAREN':
                 saida.append(pilha.pop())
             pilha.pop()        # descarta '('
+
+    # Qualquer operador restante vai para a saída
     return saida + pilha[::-1]
 
 def avaliar_rpn(rpn: List[Token]) -> float:
-    """avalia a expressao em pós‑fixa retornando um float."""
+    """
+       percorre a lista de tokens em RPN usando uma pilha:
+
+       • Numero → empilha.
+       • Operador → desempilha 2 valores aplica operacao empilha resultado
+
+       retorna o calculo como float
+       """
+    """avalia a expressao em pos‑fixa retornando um float."""
     pilha: List[float] = []
     for tipo, lexema in rpn:
         if tipo == 'INTEIRO':
@@ -73,8 +129,11 @@ def avaliar_rpn(rpn: List[Token]) -> float:
             b, a = pilha.pop(), pilha.pop()
             pilha.append(operadores[tipo](a, b))
     return pilha[0]
+# -----------------------------------------------------------------------------------------------------------------
 
 
+
+# ------------------------------------------------------------------------------------------------------------------
 def principal() -> None:
     expressao = input("Digite a expressão matemática: ").strip()
     if not expressao:
@@ -93,3 +152,5 @@ def principal() -> None:
 
 if __name__ == "__main__":
     principal()
+
+# -----------------------------------------------------------------------------------------------------------------
